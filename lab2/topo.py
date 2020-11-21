@@ -18,178 +18,142 @@
 import sys
 import random
 import queue
+import networkx as nx
+# importing matplotlib.pyplot
+import matplotlib.pyplot as plt
+
+from collections import defaultdict
+
+
+class NetworkError(Exception):
+    def __init__(self, message):
+        super(NetworkError, self).__init__(message)
+
 
 # Class for an edge in the graph
 class Edge:
-	def __init__(self):
-		self.lnode = None
-		self.rnode = None
-		self.bw = None
+    def __init__(self):
+        self.lnode = None
+        self.rnode = None
+        self.bw = None
 
-	def remove(self):
-		self.lnode.edges.remove(self)
-		self.rnode.edges.remove(self)
-		self.lnode = None
-		self.rnode = None
-		self.bw = None
+    def remove(self):
+        self.lnode.edges.remove(self)
+        self.rnode.edges.remove(self)
+        self.lnode = None
+        self.rnode = None
+        self.bw = None
 
-	def __str__(self):
-		return self.lnode.id + '->' + self.rnode.id + ' - BW:' + str(self.bw)
+    def __str__(self):
+        return self.lnode.id + '->' + self.rnode.id + ' - BW:' + str(self.bw)
+
 
 # Class for a node in the graph
 class Node:
-	def __init__(self, id, type):
-		self.edges = []
-		self.id = id
-		self.type = type
+    def __init__(self, id, type):
+        self.edges = []
+        self.id = id
+        self.type = type
 
-	# Add an edge connected to another node
-	def add_edge(self, node, bw):
-		edge = Edge()
-		edge.lnode = self
-		edge.rnode = node
-		edge.bw = bw
-		self.edges.append(edge)
-		node.edges.append(edge)
-		return edge
+    # Add an edge connected to another node
+    def add_edge(self, node, bw):
+        edge = Edge()
+        edge.lnode = self
+        edge.rnode = node
+        edge.bw = bw
+        self.edges.append(edge)
+        node.edges.append(edge)
+        return edge
 
-	# Remove an edge from the node
-	def remove_edge(self, edge):
-		self.edges.remove(edge)
+    # Remove an edge from the node
+    def remove_edge(self, edge):
+        self.edges.remove(edge)
 
-	# Decide if another node is a neighbor
-	def is_neighbor(self, node):
-		for edge in self.edges:
-			if edge.lnode == node or edge.rnode == node:
-				return True
-		return False
+    # Decide if another node is a neighbor
+    def is_neighbor(self, node):
+        for edge in self.edges:
+            if edge.lnode == node or edge.rnode == node:
+                return True
+        return False
 
 
-# class Jellyfish:
-#
-# 	def __init__(self, num_servers, num_switches, num_ports):
-# 		self.servers = []
-# 		self.switches = []
-# 		self.generate(num_servers, num_switches, num_ports)
-#
-# 	def generate(self, num_servers, num_switches, num_ports):
-#
-# 		# TODO: code for generating the jellyfish topology
+def generate_random_regular_graph_edges(node_degree, number_of_nodes, seed=None):
+    if (number_of_nodes * node_degree) % 2 != 0:
+        raise NetworkError("n * d must be even")
 
-class Fattree:
+    if not 0 <= node_degree < number_of_nodes:
+        raise NetworkError("the 0 <= d < n inequality must be satisfied")
 
-	CoreSwitches = []
-	AggSwitches = []
-	EdgeSwitches = []
-	Servers = []
+    if node_degree == 0:
+        return []
 
-	def __init__(self, num_ports):
-		self.pod = num_ports
-		self.numCore = (num_ports // 2) ** 2
-		self.numAgg = (num_ports ** 2) // 2
-		self.numEdge = (num_ports ** 2) // 2
-		self.density = num_ports // 2
-		self.numSv = (num_ports ** 3 ) // 4
-		self.bw_c2a = 0.2
-		self.bw_a2e = 0.1
-		self.bw_e2s = 0.05
+    def _suitable(edges, potential_edges):
+        # Helper subroutine to check if there are suitable edges remaining
+        # If False, the generation of the graph has failed
+        if not potential_edges:
+            return True
+        for s1 in potential_edges:
+            for s2 in potential_edges:
+                # Two iterators on the same dictionary are guaranteed
+                # to visit it in the same order if there are no
+                # intervening modifications.
+                if s1 == s2:
+                    # Only need to consider s1-s2 pair one time
+                    break
+                if s1 > s2:
+                    s1, s2 = s2, s1
+                if (s1, s2) not in edges:
+                    return True
+        return False
 
-		print(f'\nGenerating Fattree with {num_ports} ports on each switch..')
-		print("Switch Level 1 = Core Layer Switch")
-		print("Switch Level 2 = Aggregation Layer Switch")
-		print("Switch Level 3 = Edge Layer Switch")
-		self.generateTopo(num_ports)
-		self.generateLinks(bw_c2a = self.bw_c2a, bw_a2e = self.bw_a2e, bw_e2s = self.bw_e2s)
+    def _try_creation():
+        # Attempt to create an edge set
 
-	def generateTopo(self, num_ports):
-		self.createCore(self.numCore)
-		self.createAgg(self.numAgg)
-		self.createEdge(self.numEdge)
-		self.createServer(self.numSv)
-		self.printTopo()
+        edges = set()
+        stubs = list(range(number_of_nodes)) * node_degree
 
-	def addSwitch(self, num_sw, level, switchList):
-		for sw in range(1, num_sw + 1):
-			switchList.append(Node('sw' + str(level) + str(sw), 'Switch Level ' + str(level)))
+        while stubs:
+            potential_edges = defaultdict(lambda: 0)
+            seed.shuffle(stubs)
+            stub_iter = iter(stubs)
 
-	def createCore(self, num_sw):
-		print("\nCreating Core Layer..")
-		self.addSwitch(num_sw, 1, self.CoreSwitches)
+            for s1, s2 in zip(stub_iter, stub_iter):
+                if s1 > s2:
+                    s1, s2 = s2, s1
+                if s1 != s2 and ((s1, s2) not in edges):
+                    edges.add((s1, s2))
+                else:
+                    potential_edges[s1] += 1
+                    potential_edges[s2] += 1
 
-	def createAgg(self, num_sw):
-		print("Creating Aggregation Layer..")
-		self.addSwitch(num_sw, 2, self.AggSwitches)
+            if not _suitable(edges, potential_edges):
+                return None  # failed to find suitable edge set
 
-	def createEdge(self, num_sw):
-		print("Creating Edge Layer..\n")
-		self.addSwitch(num_sw, 3, self.EdgeSwitches)
+            stubs = [
+                node
+                for node, potential in potential_edges.items()
+                for _ in range(potential)
+            ]
+        return edges
 
-	def createServer(self, num_sv):
-		for sv in range(1, num_sv + 1):
-			self.Servers.append(Node('sv'+ str(sv),'Server'))
+    # Even though a suitable edge set exists,
+    # the generation of such a set is not guaranteed.
+    # Try repeatedly to find one.
+    edges = _try_creation()
+    while edges is None:
+        edges = _try_creation()
 
-	#GENERATING LINKS
-	def generateLinks(self, bw_c2a = 0.2, bw_a2e = 0.1, bw_e2s = 0.05):
-		print('\nAdding links from core switches to aggregation switches..')
-		step = self.pod // 2
-		for x in range (0, self.numAgg, step):
-			for y in range(0, step):
-				for z in range(0, step):
-					self.CoreSwitches[y*step+z].add_edge(self.AggSwitches[x+y], bw_c2a)
+    return edges
 
-		print('Adding links from aggregation switches to edge switches..')
-		for x in range (0, self.numAgg, step):
-			for y in range(0, step):
-				for z in range(0, step):
-					self.AggSwitches[x+y].add_edge(self.EdgeSwitches[x+z], bw_a2e)
 
-		print('Adding links from edge switches to servers..')
-		for x in range(0, self.numEdge):
-			for y in range (0, self.density):
-				self.EdgeSwitches[x].add_edge(self.Servers[self.density * x + y], bw_e2s)
-		self.printLinks()
+def draw_topology(nodes):
+    g = nx.Graph()
+    for node in nodes:
+        for edge in node.edges:
+            g.add_edge(edge.lnode.id, edge.rnode.id)
 
-	def printTopo(self):
-		print ('Printing core switches...')
-		for x in self.CoreSwitches:
-			print (f'ID: {x.id} TYPE: {x.type}')
+    nx.draw(g, with_labels=True)
+    plt.show()
 
-		print ('\nPrinting aggregation switches...')
-		for x in self.AggSwitches:
-			print (f'ID: {x.id} TYPE: {x.type}')
 
-		print ('\nPrinting edge switches...')
-		for x in self.EdgeSwitches:
-			print (f'ID: {x.id} TYPE: {x.type}')
 
-		print ('\nPrinting generated servers...')
-		for x in self.Servers:
-			print (f'ID: {x.id} TYPE: {x.type}')
-
-	def printLinks(self):
-		print('\nPrinting links for core nodes..\n')
-		for sw in self.CoreSwitches:
-			print(f'Links for core switch {self.CoreSwitches.index(sw) + 1}:')
-			for x in sw.edges:
-				print(x)
-
-		print('\nLinks for aggregation nodes..\n')
-		for sw in self.AggSwitches:
-			print(f'Links for aggregation switch {self.AggSwitches.index(sw) + 1}:')
-			for x in sw.edges:
-				print(x)
-
-		print('\nPrinting links for edges nodes..\n')
-		for sw in self.EdgeSwitches:
-			print(f'Links for edge switch {self.EdgeSwitches.index(sw) + 1}:')
-			for x in sw.edges:
-				print(x)
-
-		print('\nPrinting links for server nodes..\n')
-		for sv in self.Servers:
-			print(f'Links for server {self.Servers.index(sv) + 1}:')
-			for x in sv.edges:
-				print(x)
-
-#Building Fattree with 8 switch ports
-tree = Fattree(4)
