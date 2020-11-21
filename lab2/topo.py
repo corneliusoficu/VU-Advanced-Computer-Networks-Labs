@@ -90,9 +90,9 @@ class Fattree:
 		self.numEdge = (num_ports ** 2) // 2
 		self.density = num_ports // 2
 		self.numSv = (num_ports ** 3 ) // 4
-		self.bw_c2a = 0.2
-		self.bw_a2e = 0.1
-		self.bw_e2s = 0.05
+		self.bw_c2a = 1
+		self.bw_a2e = 0.5
+		self.bw_e2s = 0.25
 
 		print(f'\nGenerating Fattree with {num_ports} ports on each switch..')
 		print("Switch Level 1 = Core Layer Switch")
@@ -101,12 +101,13 @@ class Fattree:
 		self.generateTopo(num_ports)
 		self.generateLinks(bw_c2a = self.bw_c2a, bw_a2e = self.bw_a2e, bw_e2s = self.bw_e2s)
 
+	#GENERATING TOPO
 	def generateTopo(self, num_ports):
 		self.createCore(self.numCore)
 		self.createAgg(self.numAgg)
 		self.createEdge(self.numEdge)
 		self.createServer(self.numSv)
-		self.printTopo()
+		#self.printTopo()
 
 	def addSwitch(self, num_sw, level, switchList):
 		for sw in range(1, num_sw + 1):
@@ -129,7 +130,7 @@ class Fattree:
 			self.Servers.append(Node('sv'+ str(sv),'Server'))
 
 	#GENERATING LINKS
-	def generateLinks(self, bw_c2a = 0.2, bw_a2e = 0.1, bw_e2s = 0.05):
+	def generateLinks(self, bw_c2a = 1, bw_a2e = 0.5, bw_e2s = 0.25):
 		print('\nAdding links from core switches to aggregation switches..')
 		step = self.pod // 2
 		for x in range (0, self.numAgg, step):
@@ -147,7 +148,7 @@ class Fattree:
 		for x in range(0, self.numEdge):
 			for y in range (0, self.density):
 				self.EdgeSwitches[x].add_edge(self.Servers[self.density * x + y], bw_e2s)
-		self.printLinks()
+		#self.printLinks()
 
 	def printTopo(self):
 		print ('Printing core switches...')
@@ -191,5 +192,5 @@ class Fattree:
 			for x in sv.edges:
 				print(x)
 
-#Building Fattree with 8 switch ports
-tree = Fattree(4)
+#Building Fattree with 14 switch ports
+#tree = Fattree(14)
