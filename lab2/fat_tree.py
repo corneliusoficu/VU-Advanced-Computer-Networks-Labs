@@ -1,4 +1,4 @@
-from lab2.topo import Node, draw_topology
+from topo import Node, draw_topology
 
 
 class Fattree:

@@ -1,20 +1,19 @@
 import random
 
-from lab2.topo import Node, generate_random_regular_graph_edges, draw_topology, NetworkError
+from topo import Node, generate_random_regular_graph_edges, draw_topology, NetworkError
 
 
 class Jellyfish:
 
-    def __init__(self, num_servers, num_switches, num_ports):
+    def __init__(self, num_servers, num_switches, num_ports, seed_value):
         self.servers = []
         self.switches = []
         self.num_servers = num_servers
         self.num_switches = num_switches
         self.num_ports = num_ports
-        self.generate()
+        self.generate(seed_value)
 
-    def generate(self):
-        seed_value = 69
+    def generate(self, seed_value):
         seed = random.Random(seed_value)
         self.switches = list(map(lambda index: Node("sw"+str(index), "sw"), range(self.num_switches)))
         switch_edges = generate_random_regular_graph_edges(int(self.num_ports/2), self.num_switches, seed=seed)
@@ -64,5 +63,6 @@ class Jellyfish:
 
 
 if __name__ == '__main__':
-    jellyfish = Jellyfish(80, 20, 8)
+    random_value = random.randint(0, 300)
+    jellyfish = Jellyfish(80, 20, 8, random_value)
     draw_topology(jellyfish.switches)

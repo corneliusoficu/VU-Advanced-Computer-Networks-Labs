@@ -14,14 +14,19 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import argparse
+import random
 import time
+from functools import partial
 
 import fat_tree
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Same setup for Jellyfish and Fattree
-from lab2 import jellyfish
+import jellyfish
+
+from multiprocessing import Pool, Process, Manager
 
 #jf_topo = topo.Jellyfish(num_servers, num_switches, num_ports)
 
@@ -87,6 +92,7 @@ def compute_results(nodeDict):
               pathsOf6 / possiblePairs]
     return values
 
+
 def plot_results(topo_1_values, topo_2_values):
     #plot the results
     labels = ['2', '3', '4', '5', '6']
@@ -94,11 +100,12 @@ def plot_results(topo_1_values, topo_2_values):
     x = np.arange(len(labels))  # the label locations
     width = 0.35  # the width of the bars
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10, 5))
     rects1 = ax.bar(x - width / 2, topo_2_values, width, label='Jellyfish', color='b')
     rects2 = ax.bar(x + width / 2, topo_1_values, width, label='Fat Tree', color='r')
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
+    plt.ylim([0, 1])
     ax.set_ylabel('Fraction of server pairs')
     ax.set_xlabel('Paths length')
     ax.set_title('Path length distribution between servers for a 686-server Fattree and Jellyfish Topology')
@@ -124,32 +131,65 @@ def plot_results(topo_1_values, topo_2_values):
     plt.show()
 
 
-def generate_1c_fat_tree(nr_ports):
+def generate_1c_fat_tree(nr_ports, shared_list):
     ft_topo = fat_tree.Fattree(nr_ports)
     allNodes = ft_topo.CoreSwitches + ft_topo.AggSwitches + ft_topo.EdgeSwitches + ft_topo.Servers
     nodeDict = generate_tree_adj(allNodes)
-    return compute_results(nodeDict)
+    results = compute_results(nodeDict)
+    shared_list.extend(results)
 
 
-def generate_1c_jellyfish(nr_servers, nr_switches, nr_ports):
-    jf_topo = jellyfish.Jellyfish(nr_servers, nr_switches, nr_ports)
+def generate_1c_jellyfish(nr_servers, nr_switches, nr_ports, seed_value):
+    print(nr_servers, nr_switches, nr_ports, seed_value)
+    jf_topo = jellyfish.Jellyfish(nr_servers, nr_switches, nr_ports, seed_value)
     allNodes = jf_topo.switches + jf_topo.servers
     nodeDict = generate_tree_adj(allNodes)
     return compute_results(nodeDict)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Reproduce figure 1c of paper')
+
+    parser.add_argument('-s', '--servers', dest='servers', required=True, type=int,
+                        help='Number of servers for the experiment')
+
+    parser.add_argument('-sw', '--switches', dest='switches', required=True, type=int,
+                        help='Number of switches for the experiment')
+
+    parser.add_argument('-p', '--ports', dest='ports', required=True, type=int,
+                        help='Number of ports for the experiment')
+
+    parser.add_argument('-r', '--repetitions', dest='repetitions', required=True, type=int,
+                        help='Number of repetitions for the jellyfish experiment')
+
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
     start_time = time.time()
-    NUM_SERVERS = 686
-    NUM_SWITCHES = 98
-    NUM_PORTS = 14
 
-    ft_topo_results = generate_1c_fat_tree(NUM_PORTS)
-    jf_topo_results = generate_1c_jellyfish(NUM_SERVERS, NUM_SWITCHES, NUM_PORTS)
+    args = parse_args()
+    print(f'Reproducing figure 1c for the following configuration: Servers: {args.servers}, Switches: {args.switches}, '
+          f'Ports: {args.ports}, Jellyfish repetitions: {args.repetitions}')
 
+    manager = Manager()
+    ft_results_list = manager.list()
+
+    ft_process = Process(target=generate_1c_fat_tree, args=(args.ports, ft_results_list))
+    ft_process.start()
+
+    seed_values = [random.randint(0, 300) for _ in range(0, args.repetitions)]
+    jellyfish_args = [(args.servers, args.switches, args.ports, seed_value) for seed_value in seed_values]
+
+    with Pool(args.repetitions) as p:
+        results_multiple_runs_jellyfish = p.starmap(generate_1c_jellyfish, jellyfish_args)
+
+    average_jellyfish_results = list(map(lambda x: x / args.repetitions, [sum(x) for x in zip(*results_multiple_runs_jellyfish)]))
+
+    ft_process.join()
     end_time = time.time()
     print(f"Total duration: {end_time-start_time} seconds")
-    plot_results(ft_topo_results, jf_topo_results)
+    plot_results(ft_results_list, average_jellyfish_results)
 
 
 
