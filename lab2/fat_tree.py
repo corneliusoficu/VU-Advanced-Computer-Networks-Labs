@@ -1,4 +1,4 @@
-from lab2.topo import Node
+from lab2.topo import Node, draw_topology
 
 
 class Fattree:
@@ -119,6 +119,7 @@ class Fattree:
 # Building Fattree with 8 switch ports
 if __name__ == '__main__':
     tree = Fattree(4)
-    print_topology()
+    all_nodes = tree.CoreSwitches + tree.AggSwitches + tree.EdgeSwitches + tree.Servers
+    draw_topology(all_nodes)
 
 

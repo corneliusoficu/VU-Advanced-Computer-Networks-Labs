@@ -16,10 +16,10 @@ class Jellyfish:
     def generate(self):
         seed_value = 69
         seed = random.Random(seed_value)
-        self.switches = list(map(lambda index: Node(index, "sw"), range(self.num_switches)))
+        self.switches = list(map(lambda index: Node("sw"+str(index), "sw"), range(self.num_switches)))
         switch_edges = generate_random_regular_graph_edges(int(self.num_ports/2), self.num_switches, seed=seed)
         self._interconnect_switches_based_on_edges(switch_edges)
-        self.servers = list(map(lambda index: Node(index + self.num_switches, "sv"), range(self.num_servers)))
+        self.servers = list(map(lambda index: Node("sv"+str(index), "sv"), range(self.num_servers)))
         self._attach_servers_to_switches()
 
     def _interconnect_switches_based_on_edges(self, switch_edges):
