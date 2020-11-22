@@ -134,11 +134,9 @@ def random_derangement(n):
                 return tuple(v)
 
 
-def compute_all_k_shortest_paths(k, topo, parallelism):
-    servers = list({k for (k, v) in topo.items() if k.startswith('sv')})
+def compute_all_k_shortest_paths(k, topo, parallelism, server_pairs):
     topo_copy = topo.copy()
-    all_server_pairs = [(servers[i], servers[j]) for i in range(0, len(servers)) for j in range(i + 1, len(servers))]
-    chunks = chunk_array(all_server_pairs, parallelism)
+    chunks = chunk_array(server_pairs, parallelism)
 
     processes = []
     for i in range(0, parallelism):
@@ -150,7 +148,9 @@ def compute_all_k_shortest_paths(k, topo, parallelism):
     all_ksp = {}
     for p, q in processes:
         p.join()
-        all_ksp.update(q.get())
+        computed_dict = q.get()
+        print(f'Computed ksp dict of size: {len(computed_dict)}')
+        all_ksp.update(computed_dict)
 
     return all_ksp
 
@@ -161,7 +161,7 @@ def topo_get_all_links(topo):
 
 def get_path_counts(all_ksp, traffic_matrix, all_links, all_servers):
     counts = {}
-
+    print(len(all_links))
     for link in all_links:
         a, b = link
         counts[(a, b)] = {'8-ksp': 0}
@@ -196,7 +196,6 @@ def get_path_counts(all_ksp, traffic_matrix, all_links, all_servers):
 def assemble_histogram(path_counts):
     ksp_distinct_paths_counts = []
 
-    print(path_counts.items())
     for _, value in sorted(path_counts.items(), key=lambda kv: (kv[1]["8-ksp"], kv[0])):
         ksp_distinct_paths_counts.append(value["8-ksp"])
 
@@ -216,11 +215,20 @@ if __name__ == '__main__':
     jf_topo = jellyfish.Jellyfish(args.servers, args.switches, args.ports, 45)
     all_nodes = jf_topo.switches + jf_topo.servers
 
-    derangement = random_derangement(len(jf_topo.servers))
+    derangement = random_derangement(685)
+    derangment_links = []
 
-    parallelism = 12
+    for start_host in derangement:
+        dest_host = derangement[start_host]
+
+        start_node = jf_topo.servers[start_host].id
+        dest_node = jf_topo.servers[dest_host].id
+
+        derangment_links.append((start_node, dest_node))
+
+    parallelism = 40
     topo = reproduce_1c.generate_tree_adj(all_nodes)
-    all_ksp = compute_all_k_shortest_paths(K, topo, parallelism)
+    all_ksp = compute_all_k_shortest_paths(K, topo, parallelism, derangment_links)
     all_links = topo_get_all_links(topo)
 
     path_counts = get_path_counts(all_ksp, derangement, all_links, jf_topo.servers)
