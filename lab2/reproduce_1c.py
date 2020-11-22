@@ -28,11 +28,7 @@ import jellyfish
 
 from multiprocessing import Pool, Process, Manager
 
-#jf_topo = topo.Jellyfish(num_servers, num_switches, num_ports)
 
-# TODO: code for reproducing Figure 1(c) in the jellyfish paper
-
-############################################FATTREE##############################################
 def generate_tree_adj(allNodes):
     nodeDict = {}
     for node in allNodes:
@@ -159,7 +155,7 @@ def parse_args():
     parser.add_argument('-p', '--ports', dest='ports', required=True, type=int,
                         help='Number of ports for the experiment')
 
-    parser.add_argument('-r', '--repetitions', dest='repetitions', required=True, type=int,
+    parser.add_argument('-r', '--repetitions', dest='repetitions', required=False, type=int, default=10,
                         help='Number of repetitions for the jellyfish experiment')
 
     return parser.parse_args()
