@@ -33,16 +33,14 @@ from mininet.util import waitListening, custom
 
 import topo
 
+
 class FattreeNet(Topo):
 	"""
 	Create a fat-tree network in Mininet
 	"""
 
 	def __init__(self, ft_topo):
-		
 		Topo.__init__(self)
-
-		# TODO: please complete the network generation logic here
 
 
 def make_mininet_instance(graph_topo):
@@ -51,6 +49,7 @@ def make_mininet_instance(graph_topo):
 	net = Mininet(topo=net_topo, controller=None, autoSetMacs=True)
 	net.addController('c0', controller=RemoteController, ip="127.0.0.1", port=6653)
 	return net
+
 
 def run(graph_topo):
 	
@@ -65,7 +64,6 @@ def run(graph_topo):
 	CLI(net)
 	info('*** Stopping network ***\n')
 	net.stop()
-
 
 
 ft_topo = topo.Fattree(4)
