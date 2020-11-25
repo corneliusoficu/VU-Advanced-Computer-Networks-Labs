@@ -118,7 +118,7 @@ class Fattree:
 
 # Building Fattree with 8 switch ports
 if __name__ == '__main__':
-    tree = Fattree(4)
+    tree = Fattree(8)
     all_nodes = tree.CoreSwitches + tree.AggSwitches + tree.EdgeSwitches + tree.Servers
     draw_topology(all_nodes)
 

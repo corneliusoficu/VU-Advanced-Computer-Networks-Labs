@@ -69,5 +69,5 @@ class Jellyfish:
 
 if __name__ == '__main__':
     random_value = random.randint(0, 300)
-    jellyfish = Jellyfish(80, 21, 8, random_value)
+    jellyfish = Jellyfish(80, 20, 8, random_value)
     draw_topology(jellyfish.switches)
