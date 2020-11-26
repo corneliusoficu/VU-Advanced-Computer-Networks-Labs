@@ -41,10 +41,23 @@ class FattreeNet(Topo):
 
 	def __init__(self, ft_topo):
 		Topo.__init__(self)
+		self.servers = {node.id: self.addHost(node.id, ip=node.ip_address) for node in ft_topo.servers}
+		self.core_switches = {switch.id: self.addSwitch(switch.id) for switch in ft_topo.core_switches}
+		self.aggregation_switches = {switch.id: self.addSwitch(switch.id) for switch in ft_topo.agg_switches}
+		self.edge_switches = {switch.id: self.addSwitch(switch.id) for switch in ft_topo.edge_switches}
+		self.ft_nodes = {**self.servers, **self.core_switches, **self.aggregation_switches, **self.edge_switches}
+
+		print(f'Number of core switches: {len(self.core_switches)}')
+		print(f'Number of aggregation switches: {len(self.aggregation_switches)}')
+		print(f'Number of edge switches: {len(self.edge_switches)}')
+		print(f'Number of servers: {len(self.servers)}')
+
+		self.all_nodes = ft_topo.servers + ft_topo.core_switches + ft_topo.agg_switches + ft_topo.edge_switches
+		self.ft_links = {(edge.left_node.id, edge.right_node.id) for node in self.all_nodes for edge in node.edges}
+		self.ft_links = [self.addLink(self.ft_nodes[a], self.ft_nodes[b]) for (a, b) in self.ft_links]
 
 
 def make_mininet_instance(graph_topo):
-
 	net_topo = FattreeNet(graph_topo)
 	net = Mininet(topo=net_topo, controller=None, autoSetMacs=True)
 	net.addController('c0', controller=RemoteController, ip="127.0.0.1", port=6653)

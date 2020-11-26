@@ -116,7 +116,7 @@ class Fattree:
             ip_address = addressing_scheme(sw)
             switch = Node('sw' + str(level) + str(sw+1), 'Switch Level ' + str(level), ip_address)
             switch_list.append(switch)
-            print(switch)
+            print(f'Created switch {switch.id} with ip: {switch.ip_address}')
 
     def _create_core(self, num_sw):
         print("\nCreating Core Layer..")
@@ -136,7 +136,7 @@ class Fattree:
             ip_address = self._server_ip_addressing_scheme(sv)
             server = Node('sv' + str(sv+1), 'Server', ip_address)
             self.servers.append(server)
-            print(server)
+            print(f'Created server {server.id} with ip: {server.ip_address}')
 
     def _generate_links(self, bw_c2a=0.2, bw_a2e=0.1, bw_e2s=0.05):
         print('\nAdding links from core switches to aggregation switches..')
