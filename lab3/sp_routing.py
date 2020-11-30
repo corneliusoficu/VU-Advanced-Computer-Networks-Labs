@@ -120,10 +120,10 @@ class SPRouter(app_manager.RyuApp):
 
         self.switches = [switch.dp.id for switch in switch_list]
         self.datapath_list = [switch.dp for switch in switch_list]
-
-        print(f"switches={self.switches}")
+        print(f"{len(self.switches)} switches={self.switches}")
 
         self.switches_links = copy.copy(get_link(self, None))
+        print(f'{len(self.switches_links)} links')
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -189,10 +189,13 @@ class SPRouter(app_manager.RyuApp):
             else:
                 out_port = ofproto.OFPP_FLOOD
         else:
-            out_port = list(filter(lambda l:
-                                   l.src.dpid == dpid and
-                                   'sw' + str(l.dst.dpid) == next_dpid,
-                                   self.switches_links))[0].src.port_no
+            for link in self.switches_links:
+                if link.src.dpid == dpid and 'sw' + str(link.dst.dpid) == next_dpid:
+                    out_port = link.src.port_no
+                    break
+                elif link.dst.dpid == dpid and 'sw'+str(link.src.dpid) == next_dpid:
+                    out_port = link.dst.port_no
+                    break
 
         actions = [parser.OFPActionOutput(out_port)]
 
