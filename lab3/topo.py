@@ -46,7 +46,7 @@ class Node:
     # Decide if another node is a neighbor
     def is_neighbor(self, node):
         for edge in self.edges:
-            if edge.lnode == node or edge.rnode == node:
+            if edge.left_node == node or edge.right_node == node:
                 return True
         return False
 
