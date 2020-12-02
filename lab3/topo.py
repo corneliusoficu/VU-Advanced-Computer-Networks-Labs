@@ -107,7 +107,7 @@ class Fattree:
     def _server_ip_addressing_scheme(self, sv_index):
         pod_index = int(((sv_index - (sv_index % self.num_pods)) + self.num_pods) / self.num_pods) - 1
         half_ports = self.num_ports / 2
-        switch_index = int(((sv_index - (sv_index % half_ports)) + half_ports) / half_ports) - 1
+        switch_index = edge_switch_index = int(sv_index/half_ports % half_ports)
         id = 2 + int(sv_index % (self.num_ports / 2))
         return f'10.{pod_index}.{switch_index}.{id}'
 
