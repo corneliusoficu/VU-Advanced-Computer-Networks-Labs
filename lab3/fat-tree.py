@@ -52,7 +52,7 @@ class FattreeNet(Topo):
 		print(f'Number of edge switches: {len(self.edge_switches)}')
 		print(f'Number of servers: {len(self.servers)}')
 
-		link_opts = dict(bw=15, delay='5ms')
+		link_opts = dict(cls=TCLink, bw=15, delay='5ms')
 
 		self.all_nodes = ft_topo.servers + ft_topo.core_switches + ft_topo.agg_switches + ft_topo.edge_switches
 		self.ft_links = {(edge.left_node.id, edge.right_node.id) for node in self.all_nodes for edge in node.edges}
