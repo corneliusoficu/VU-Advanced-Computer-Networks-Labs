@@ -52,9 +52,11 @@ class FattreeNet(Topo):
 		print(f'Number of edge switches: {len(self.edge_switches)}')
 		print(f'Number of servers: {len(self.servers)}')
 
+		link_opts = dict(bw=15, delay='5ms')
+
 		self.all_nodes = ft_topo.servers + ft_topo.core_switches + ft_topo.agg_switches + ft_topo.edge_switches
 		self.ft_links = {(edge.left_node.id, edge.right_node.id) for node in self.all_nodes for edge in node.edges}
-		self.ft_links = [self.addLink(self.ft_nodes[a], self.ft_nodes[b]) for (a, b) in self.ft_links]
+		self.ft_links = [self.addLink(self.ft_nodes[a], self.ft_nodes[b], **link_opts) for (a, b) in self.ft_links]
 
 
 def make_mininet_instance(graph_topo):
@@ -74,6 +76,8 @@ def run(graph_topo):
 	info('*** Starting network ***\n')
 	net.start()
 	info('*** Running CLI ***\n')
+	script = 'performence.sh'
+	CLI(net, script=script)
 	CLI(net)
 	info('*** Stopping network ***\n')
 	net.stop()

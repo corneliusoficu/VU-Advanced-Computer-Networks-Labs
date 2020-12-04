@@ -1,0 +1,8 @@
+sv1.log:[  3]  0.0-60.0 sec  71.4 GBytes  10.2 Gbits/sec
+sv11.log:[  3]  0.0-60.0 sec  70.9 GBytes  10.2 Gbits/sec
+sv13.log:[  4]  0.0-60.0 sec  71.5 GBytes  10.2 Gbits/sec
+sv14.log:[  4]  0.0-60.0 sec  70.9 GBytes  10.2 Gbits/sec
+sv4.log:[  3]  0.0-60.0 sec  74.1 GBytes  10.6 Gbits/sec
+sv5.log:[  4]  0.0-60.0 sec  71.4 GBytes  10.2 Gbits/sec
+sv6.log:[  4]  0.0-60.0 sec  74.1 GBytes  10.6 Gbits/sec
+sv9.log:[  3]  0.0-60.0 sec  71.5 GBytes  10.2 Gbits/sec
